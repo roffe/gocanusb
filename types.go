@@ -45,7 +45,7 @@ const (
 	FLUSH_EMPTY_INQUEUE FlushFlag = 0x02
 )
 
-type MessageFlag uint32
+type MessageFlag uint8
 
 // Message flags
 const (
