@@ -2,7 +2,7 @@ package gocanusb
 
 import "fmt"
 
-func errWrap(r1, _ uintptr, _ error) error {
+func checkErr(r1, _ uintptr, _ error) error {
 	return NewError(int(r1))
 }
 

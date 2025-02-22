@@ -73,7 +73,7 @@ func (ch *CANHANDLE) Close() error {
 	defer func() {
 		ch.h = -1
 	}()
-	return errWrap(procClose.Call(uintptr(ch.h)))
+	return checkErr(procClose.Call(uintptr(ch.h)))
 }
 
 // Read message from channel
@@ -92,7 +92,7 @@ func (ch *CANHANDLE) ReadFirst(id uint32, flags MessageFlag) (msg *CANMsg, err e
 
 // Write message to channel
 func (ch *CANHANDLE) Write(msg *CANMsg) error {
-	return errWrap(procWrite.Call(uintptr(ch.h), uintptr(unsafe.Pointer(msg))))
+	return checkErr(procWrite.Call(uintptr(ch.h), uintptr(unsafe.Pointer(msg))))
 }
 
 // Get Adaper status for channel
@@ -143,7 +143,7 @@ func (ch *CANHANDLE) VersionInfo() (string, error) {
 //
 // If flushflags is set to FLUSH_DONTWAIT the queue is just emptied and there will be no wait for any frames in it to be sent
 func (ch *CANHANDLE) Flush(flags FlushFlag) error {
-	return errWrap(procFlush.Call(uintptr(ch.h), uintptr(flags)))
+	return checkErr(procFlush.Call(uintptr(ch.h), uintptr(flags)))
 }
 
 func (ch *CANHANDLE) GetStatistics() (*CANUsbStatistics, error) {
@@ -154,12 +154,12 @@ func (ch *CANHANDLE) GetStatistics() (*CANUsbStatistics, error) {
 
 // Set timeouts used for blocking calls for channel
 func (ch *CANHANDLE) SetTimeout(receiveTimeout, sendTimeout uint32) error {
-	return errWrap(procSetTimeout.Call(uintptr(ch.h), uintptr(receiveTimeout), uintptr(sendTimeout)))
+	return checkErr(procSetTimeout.Call(uintptr(ch.h), uintptr(receiveTimeout), uintptr(sendTimeout)))
 }
 
 // Set a receive call back function. Set the callback to nil to reset it.
 func (ch *CANHANDLE) SetReceiveCallback(fn CallbackFunc) error {
-	return errWrap(procSetReceiveCallBack.Call(uintptr(ch.h), syscall.NewCallback(fn)))
+	return checkErr(procSetReceiveCallBack.Call(uintptr(ch.h), syscall.NewCallback(fn)))
 }
 
 // Get all found adapters that is connected to this machine.
