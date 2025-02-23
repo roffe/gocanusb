@@ -11,8 +11,10 @@ var (
 	procOpen               = canusbdrv.NewProc("canusb_Open")
 	procClose              = canusbdrv.NewProc("canusb_Close")
 	procRead               = canusbdrv.NewProc("canusb_Read")
+	procReadEx             = canusbdrv.NewProc("canusb_ReadEx")
 	procReadFirst          = canusbdrv.NewProc("canusb_ReadFirst")
 	procWrite              = canusbdrv.NewProc("canusb_Write")
+	procWriteEx            = canusbdrv.NewProc("canusb_WriteEx")
 	procStatus             = canusbdrv.NewProc("canusb_Status")
 	procVersionInfo        = canusbdrv.NewProc("canusb_VersionInfo")
 	procFlush              = canusbdrv.NewProc("canusb_Flush")
@@ -69,9 +71,15 @@ func Open(szID, szBitrate string, code, mask uint32, flags OpenFlag) (*CANHANDLE
 	copy(cBitrate, []byte(szBitrate))
 	if szID == "" {
 		r1, _, _ := procOpen.Call(uintptr(0), uintptr(unsafe.Pointer(&cBitrate[0])), uintptr(code), uintptr(mask), uintptr(flags))
+		if int32(r1) == 0 {
+			return nil, ErrNoDeviceAvailable
+		}
 		return &CANHANDLE{h: int32(r1)}, NewError(int32(r1))
 	}
 	r1, _, _ := procOpen.Call(uintptr(unsafe.Pointer(&cAdapter[0])), uintptr(unsafe.Pointer(&cBitrate[0])), uintptr(code), uintptr(mask), uintptr(flags))
+	if int32(r1) == 0 {
+		return nil, ErrNoDeviceAvailable
+	}
 	return &CANHANDLE{h: int32(r1)}, NewError(int32(r1))
 }
 
@@ -85,11 +93,24 @@ func (ch *CANHANDLE) Close() error {
 
 // Read message from channel
 func (ch *CANHANDLE) Read() (msg *CANMsg, err error) {
-	// Allocate memory for message
 	msg = new(CANMsg)
-
 	r1, _, _ := procRead.Call(uintptr(ch.h), uintptr(unsafe.Pointer(msg)))
 	err = NewError(int32(r1))
+	return
+}
+
+// Read message from channel
+//
+// This is a version without a data-array in the structure
+func (ch *CANHANDLE) ReadEx() (msg *CANMsgEx, data []byte, err error) {
+	msg = new(CANMsgEx)
+	data = make([]byte, 8)
+	r1, _, _ := procReadEx.Call(uintptr(ch.h), uintptr(unsafe.Pointer(msg)), uintptr(unsafe.Pointer(&data[0])))
+	err = NewError(int32(r1))
+	if err != nil {
+		return
+	}
+	data = data[:msg.Len]
 	return
 }
 
@@ -104,6 +125,19 @@ func (ch *CANHANDLE) ReadFirst(id uint32, flags MessageFlag) (msg *CANMsg, err e
 // Write message to channel
 func (ch *CANHANDLE) Write(msg *CANMsg) error {
 	return checkErr(procWrite.Call(uintptr(ch.h), uintptr(unsafe.Pointer(msg))))
+}
+
+// Write message to channel with handle h.
+//
+// This is a version without a data-array in the structure
+func (ch *CANHANDLE) WriteEx(msg *CANMsgEx, data []byte) error {
+	if len(data) > 8 {
+		return errors.New("data array to large")
+	}
+	if len(data) < int(msg.Len) {
+		return errors.New("data array size missmatch")
+	}
+	return checkErr(procWriteEx.Call(uintptr(ch.h), uintptr(unsafe.Pointer(msg)), uintptr(unsafe.Pointer(&data[0]))))
 }
 
 // Get Adaper status for channel
@@ -138,8 +172,7 @@ func (ch *CANHANDLE) Status() error {
 	if status&CANSTATUS_BUS_ERROR != 0 {
 		errs = append(errs, errors.New("bus error (BEI)"))
 	}
-
-	return fmt.Errorf("status (%X): %v", status, errs)
+	return fmt.Errorf("status (%2X) %v", status, errs)
 }
 
 // Get hardware/firmware and driver version for channel
@@ -177,7 +210,7 @@ func (ch *CANHANDLE) SetReceiveCallback(fn CallbackFunc) error {
 	//  the data in the underlying slice to be overwritten by the next message.
 	wrapperFn := func(cbmsg *CANMsg) uintptr {
 		msg := &CANMsg{
-			Id:        cbmsg.Id,
+			ID:        cbmsg.ID,
 			Timestamp: cbmsg.Timestamp,
 			Flags:     cbmsg.Flags,
 			Len:       cbmsg.Len,

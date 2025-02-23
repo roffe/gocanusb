@@ -6,17 +6,24 @@ type CANHANDLE struct {
 	h int32
 }
 
-// CANMsg represents a CAN message
+// CAN Frame
 type CANMsg struct {
-	Id        uint32      // Message id
+	ID        uint32      // Message id
 	Timestamp uint32      // timestamp in milliseconds
 	Flags     MessageFlag // Message flags
 	Len       uint8       // Frame size (0.8)
 	Data      [8]byte     // Databytes 0..7
 }
 
+type CANMsgEx struct {
+	ID        uint32      // Message id
+	Timestamp uint32      // timestamp in milliseconds
+	Flags     MessageFlag // Message flags
+	Len       uint8       // Frame size (0.8)
+}
+
 func (msg *CANMsg) String() string {
-	return fmt.Sprintf("ID: 0x%X, Timestamp: %d, Flags: %X, Len: %d, Data: %02X", msg.Id, msg.Timestamp, msg.Flags, msg.Len, msg.Data)
+	return fmt.Sprintf("ID: 0x%X, Timestamp: %d, Flags: %X, Len: %d, Data: %02X", msg.ID, msg.Timestamp, msg.Flags, msg.Len, msg.Data)
 }
 
 type MessageFlag uint8
