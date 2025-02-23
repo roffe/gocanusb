@@ -17,7 +17,7 @@ var (
 	procVersionInfo        = canusbdrv.NewProc("canusb_VersionInfo")
 	procFlush              = canusbdrv.NewProc("canusb_Flush")
 	procGetStatistics      = canusbdrv.NewProc("canusb_GetStatistics")
-	procSetTimeout         = canusbdrv.NewProc("canusb_SetTimeout")
+	procSetTimeout         = canusbdrv.NewProc("canusb_SetTimeouts")
 	procSetReceiveCallBack = canusbdrv.NewProc("canusb_setReceiveCallBack")
 	procGetFirstAdapter    = canusbdrv.NewProc("canusb_getFirstAdapter")
 	procGetNextAdapter     = canusbdrv.NewProc("canusb_getNextAdapter")
@@ -69,10 +69,10 @@ func Open(szID, szBitrate string, code, mask uint32, flags OpenFlag) (*CANHANDLE
 	copy(cBitrate, []byte(szBitrate))
 	if szID == "" {
 		r1, _, _ := procOpen.Call(uintptr(0), uintptr(unsafe.Pointer(&cBitrate[0])), uintptr(code), uintptr(mask), uintptr(flags))
-		return &CANHANDLE{h: int(r1)}, NewError(int(r1))
+		return &CANHANDLE{h: int32(r1)}, NewError(int32(r1))
 	}
 	r1, _, _ := procOpen.Call(uintptr(unsafe.Pointer(&cAdapter[0])), uintptr(unsafe.Pointer(&cBitrate[0])), uintptr(code), uintptr(mask), uintptr(flags))
-	return &CANHANDLE{h: int(r1)}, NewError(int(r1))
+	return &CANHANDLE{h: int32(r1)}, NewError(int32(r1))
 }
 
 // Close channel
@@ -85,15 +85,19 @@ func (ch *CANHANDLE) Close() error {
 
 // Read message from channel
 func (ch *CANHANDLE) Read() (msg *CANMsg, err error) {
+	// Allocate memory for message
+	msg = new(CANMsg)
+
 	r1, _, _ := procRead.Call(uintptr(ch.h), uintptr(unsafe.Pointer(msg)))
-	err = NewError(int(r1))
+	err = NewError(int32(r1))
 	return
 }
 
 // Read message with id which satisfy flags.
 func (ch *CANHANDLE) ReadFirst(id uint32, flags MessageFlag) (msg *CANMsg, err error) {
+	msg = new(CANMsg)
 	r1, _, _ := procReadFirst.Call(uintptr(ch.h), uintptr(id), uintptr(flags), uintptr(unsafe.Pointer(msg)))
-	err = NewError(int(r1))
+	err = NewError(int32(r1))
 	return
 }
 
@@ -108,7 +112,7 @@ func (ch *CANHANDLE) Status() error {
 	if r1 == 0 {
 		return nil
 	}
-	status := int(r1)
+	status := int32(r1)
 	var errs []error
 	if err := NewError(status); err != nil {
 		return err
@@ -142,7 +146,7 @@ func (ch *CANHANDLE) Status() error {
 func (ch *CANHANDLE) VersionInfo() (string, error) {
 	data := make([]byte, 64)
 	r1, _, _ := procVersionInfo.Call(uintptr(ch.h), uintptr(unsafe.Pointer(&data[0])))
-	return cBytetoString(data), NewError(int(r1))
+	return cStringtoString(data), NewError(int32(r1))
 }
 
 // Flush output buffer on channel
@@ -156,11 +160,11 @@ func (ch *CANHANDLE) Flush(flags FlushFlag) error {
 func (ch *CANHANDLE) GetStatistics() (*CANUSBStatistics, error) {
 	stat := new(CANUSBStatistics)
 	r1, _, _ := procGetStatistics.Call(uintptr(ch.h), uintptr(unsafe.Pointer(stat)))
-	return stat, NewError(int(r1))
+	return stat, NewError(int32(r1))
 }
 
 // Set timeouts used for blocking calls for channel.
-func (ch *CANHANDLE) SetTimeout(receiveTimeout, sendTimeout uint32) error {
+func (ch *CANHANDLE) SetTimeouts(receiveTimeout, sendTimeout uint32) error {
 	return checkErr(procSetTimeout.Call(uintptr(ch.h), uintptr(receiveTimeout), uintptr(sendTimeout)))
 }
 
@@ -209,7 +213,7 @@ func GetAdapters() (adapters []string, err error) {
 func GetFirstAdapter() (int, string, error) {
 	data := make([]byte, 10)
 	r1, _, _ := procGetFirstAdapter.Call(uintptr(unsafe.Pointer(&data[0])), 10)
-	return int(r1), cStringtoString(data), NewError(int(r1))
+	return int(r1), cStringtoString(data), NewError(int32(r1))
 }
 
 // Get the found adapter(s) in turn that is connected to this machine.
@@ -218,7 +222,7 @@ func GetFirstAdapter() (int, string, error) {
 func GetNextAdapter() (string, error) {
 	data := make([]byte, 10)
 	r1, _, _ := procGetNextAdapter.Call(uintptr(unsafe.Pointer(&data[0])), 10)
-	return cStringtoString(data), NewError(int(r1))
+	return cStringtoString(data), NewError(int32(r1))
 }
 
 func cStringtoString(data []byte) string {
