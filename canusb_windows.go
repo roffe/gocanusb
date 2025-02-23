@@ -29,41 +29,48 @@ var (
 // or negative error code on falure.
 //
 // szID
-// ====
-// Serial number for adapter or NULL to open the first found.
+//
+//	Serial number for adapter or emptry string to open the first found.
 //
 // szBitrate
-// =========
-// "10" for 10kbps
-// "20" for 20kbps
-// "50" for 50kbps
-// "100" for 100kbps
-// "250" for 250kbps
-// "500" for 500kbps
-// "800" for 800kbps
-// "1000" for 1Mbps
+//
+//	"10" for 10kbps
+//	"20" for 20kbps
+//	"50" for 50kbps
+//	"100" for 100kbps
+//	"250" for 250kbps
+//	"500" for 500kbps
+//	"800" for 800kbps
+//	"1000" for 1Mbps
 //
 // or
 //
-// btr0:btr1 pair  ex. "0x03:0x1c" or 3:28
+//	btr0:btr1 pair  ex. "0x03:0x1c" or 3:28
 //
 // acceptance_code
-// ===============
-// Set to CANUSB_ACCEPTANCE_CODE_ALL to  get all messages.
+//
+// Set to ACCEPTANCE_CODE_ALL to  get all messages.
 //
 // acceptance_mask
-// ===============
-// Set to CANUSB_ACCEPTANCE_MASk_ALL to  get all messages.
+//
+// Set to ACCEPTANCE_MASK_ALL*to  get all messages.
 //
 // flags
-// =====
-// CANUSB_FLAG_TIMESTAMP - Timestamp will be set by adapter.
+//
+//	FLAG_TIMESTAMP - Timestamp will be set by adapter.
+//	FLAG_QUEUE_REPLACE - If input queue is full remove oldest message and insert new message.
+//	FLAG_BLOCK - Block receive/transmit
+//	FLAG_SLOW - Check ACK/NACK's
+//	FLAG_NO_LOCAL_SEND - Don't send transmited frames on other local channels for the same interface
 func Open(szID, szBitrate string, code, mask uint32, flags OpenFlag) (*CANHANDLE, error) {
 	cAdapter := make([]byte, 10)
 	cBitrate := make([]byte, 10)
 	copy(cAdapter, []byte(szID))
 	copy(cBitrate, []byte(szBitrate))
-	// log.Printf("sz: %s, bt: %s, code: %X, mask: %X, flags: %X", szAdapter, bitrate, code, mask, flags)
+	if szID == "" {
+		r1, _, _ := procOpen.Call(uintptr(0), uintptr(unsafe.Pointer(&cBitrate[0])), uintptr(code), uintptr(mask), uintptr(flags))
+		return &CANHANDLE{h: int(r1)}, NewError(int(r1))
+	}
 	r1, _, _ := procOpen.Call(uintptr(unsafe.Pointer(&cAdapter[0])), uintptr(unsafe.Pointer(&cBitrate[0])), uintptr(code), uintptr(mask), uintptr(flags))
 	return &CANHANDLE{h: int(r1)}, NewError(int(r1))
 }
@@ -98,9 +105,8 @@ func (ch *CANHANDLE) Write(msg *CANMsg) error {
 // Get Adaper status for channel
 func (ch *CANHANDLE) Status() error {
 	r1, _, _ := procStatus.Call(uintptr(ch.h))
-	if r1 == 0 || r1 == CANSTATUS_ARBITRATION_LOST {
+	if r1 == 0 {
 		return nil
-
 	}
 	status := int(r1)
 	var errs []error
@@ -146,20 +152,35 @@ func (ch *CANHANDLE) Flush(flags FlushFlag) error {
 	return checkErr(procFlush.Call(uintptr(ch.h), uintptr(flags)))
 }
 
-func (ch *CANHANDLE) GetStatistics() (*CANUsbStatistics, error) {
-	stat := new(CANUsbStatistics)
+func (ch *CANHANDLE) GetStatistics() (*CANUSBStatistics, error) {
+	stat := new(CANUSBStatistics)
 	r1, _, _ := procGetStatistics.Call(uintptr(ch.h), uintptr(unsafe.Pointer(stat)))
 	return stat, NewError(int(r1))
 }
 
-// Set timeouts used for blocking calls for channel
+// Set timeouts used for blocking calls for channel.
 func (ch *CANHANDLE) SetTimeout(receiveTimeout, sendTimeout uint32) error {
 	return checkErr(procSetTimeout.Call(uintptr(ch.h), uintptr(receiveTimeout), uintptr(sendTimeout)))
 }
 
 // Set a receive call back function. Set the callback to nil to reset it.
 func (ch *CANHANDLE) SetReceiveCallback(fn CallbackFunc) error {
-	return checkErr(procSetReceiveCallBack.Call(uintptr(ch.h), syscall.NewCallback(fn)))
+	if fn == nil {
+		return checkErr(procSetReceiveCallBack.Call(uintptr(ch.h), 0))
+	}
+	// Wrapper function to ensure we copy the message before calling the callback to prevent
+	//  the data in the underlying slice to be overwritten by the next message.
+	wrapperFn := func(cbmsg *CANMsg) uintptr {
+		msg := &CANMsg{
+			Id:        cbmsg.Id,
+			Timestamp: cbmsg.Timestamp,
+			Flags:     cbmsg.Flags,
+			Len:       cbmsg.Len,
+		}
+		copy(msg.Data[:], cbmsg.Data[:])
+		return fn(msg)
+	}
+	return checkErr(procSetReceiveCallBack.Call(uintptr(ch.h), syscall.NewCallback(wrapperFn)))
 }
 
 // Get all found adapters that is connected to this machine.
