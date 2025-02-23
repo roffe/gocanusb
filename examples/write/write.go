@@ -16,7 +16,7 @@ func main() {
 		"500",
 		gocanusb.ACCEPTANCE_CODE_ALL,
 		gocanusb.ACCEPTANCE_MASK_ALL,
-		gocanusb.FLAG_TIMESTAMP|gocanusb.FLAG_BLOCK|gocanusb.FLAG_NO_LOCAL_SEND|gocanusb.FLAG_SLOW,
+		gocanusb.FLAG_TIMESTAMP|gocanusb.FLAG_BLOCK,
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -26,6 +26,9 @@ func main() {
 	for i := range 5 {
 		log.Println("Writing message: ", i)
 		if err := ch.Write(&gocanusb.CANMsg{Id: 0x123, Len: 8, Data: [8]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}}); err != nil {
+			log.Println(err)
+		}
+		if err := ch.Flush(gocanusb.FLUSH_WAIT); err != nil {
 			log.Println(err)
 		}
 	}

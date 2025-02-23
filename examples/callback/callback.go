@@ -2,6 +2,10 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/roffe/gocanusb"
 )
@@ -11,7 +15,13 @@ func init() {
 }
 
 func main() {
-	// Open the first adapter found
+	quitChan := make(chan os.Signal, 1)
+	signal.Notify(quitChan, os.Interrupt, syscall.SIGTERM)
+
+	log.Println("Press CTRL-C to exit")
+	time.Sleep(1 * time.Second)
+
+	log.Println("Opening first available adapter")
 	ch, err := gocanusb.Open(
 		"",
 		"500",
@@ -27,6 +37,9 @@ func main() {
 	if err := ch.SetReceiveCallback(callbackHandler); err != nil {
 		log.Fatal(err)
 	}
+
+	sig := <-quitChan
+	log.Println("Signal received:", sig)
 
 	log.Println("Flushing")
 	if err := ch.Flush(gocanusb.FLUSH_WAIT); err != nil {
