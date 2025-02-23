@@ -152,6 +152,7 @@ func (ch *CANHANDLE) Flush(flags FlushFlag) error {
 	return checkErr(procFlush.Call(uintptr(ch.h), uintptr(flags)))
 }
 
+// Get statistics for channel
 func (ch *CANHANDLE) GetStatistics() (*CANUSBStatistics, error) {
 	stat := new(CANUSBStatistics)
 	r1, _, _ := procGetStatistics.Call(uintptr(ch.h), uintptr(unsafe.Pointer(stat)))
@@ -208,7 +209,7 @@ func GetAdapters() (adapters []string, err error) {
 func GetFirstAdapter() (int, string, error) {
 	data := make([]byte, 10)
 	r1, _, _ := procGetFirstAdapter.Call(uintptr(unsafe.Pointer(&data[0])), 10)
-	return int(r1), cBytetoString(data), NewError(int(r1))
+	return int(r1), cStringtoString(data), NewError(int(r1))
 }
 
 // Get the found adapter(s) in turn that is connected to this machine.
@@ -217,10 +218,10 @@ func GetFirstAdapter() (int, string, error) {
 func GetNextAdapter() (string, error) {
 	data := make([]byte, 10)
 	r1, _, _ := procGetNextAdapter.Call(uintptr(unsafe.Pointer(&data[0])), 10)
-	return cBytetoString(data), NewError(int(r1))
+	return cStringtoString(data), NewError(int(r1))
 }
 
-func cBytetoString(data []byte) string {
+func cStringtoString(data []byte) string {
 	for i, b := range data {
 		if b == 0 {
 			return string(data[:i])
