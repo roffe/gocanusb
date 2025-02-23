@@ -53,7 +53,7 @@ var (
 //
 // acceptance_mask
 //
-// Set to ACCEPTANCE_MASK_ALL*to  get all messages.
+// Set to ACCEPTANCE_MASK_ALL to  get all messages.
 //
 // flags
 //
