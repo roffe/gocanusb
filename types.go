@@ -3,7 +3,7 @@ package gocanusb
 import "fmt"
 
 type CANHANDLE struct {
-	h int
+	h int32
 }
 
 // CANMsg represents a CAN message
@@ -38,8 +38,8 @@ const (
 	CANSTATUS_BUS_ERROR          = 0x80
 
 	// Filter mask settings
-	ACCEPTANCE_CODE_ALL = 0x00000000
-	ACCEPTANCE_MASK_ALL = 0xFFFFFFFF
+	ACCEPTANCE_CODE_ALL uint32 = 0x00000000
+	ACCEPTANCE_MASK_ALL uint32 = 0xFFFFFFFF
 )
 
 type CANUSBStatistics struct {

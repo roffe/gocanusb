@@ -3,7 +3,7 @@ package gocanusb
 import "fmt"
 
 func checkErr(r1, _ uintptr, _ error) error {
-	return NewError(int(r1))
+	return NewError(int32(r1))
 }
 
 type Error struct {
@@ -51,34 +51,34 @@ func IsNoMessage(err error) bool {
 	return err == ErrNoMessage
 }
 
-type ErrorCode int
+type ErrorCode int32
 
 const (
-	ERROR_CANUSB_OK                ErrorCode = 0x01
-	ERROR_CANUSB_GENERAL           ErrorCode = -0x01
-	ERROR_CANUSB_OPEN_SUBSYSTEM    ErrorCode = -0x02
-	ERROR_CANUSB_COMMAND_SUBSYSTEM ErrorCode = -0x03
-	ERROR_CANUSB_NOT_OPEN          ErrorCode = -0x04
-	ERROR_CANUSB_TX_FIFO_FULL      ErrorCode = -0x05
-	ERROR_CANUSB_INVALID_PARAM     ErrorCode = -0x06
-	ERROR_CANUSB_NO_MESSAGE        ErrorCode = -0x07
-	ERROR_CANUSB_MEMORY_ERROR      ErrorCode = -0x08
-	ERROR_CANUSB_NO_DEVICE         ErrorCode = -0x09
-	ERROR_CANUSB_TIMEOUT           ErrorCode = -0x10
-	ERROR_CANUSB_INVALID_HARDWARE  ErrorCode = -0x11
+	ERROR_CANUSB_OK                ErrorCode = 1
+	ERROR_CANUSB_GENERAL           ErrorCode = -1
+	ERROR_CANUSB_OPEN_SUBSYSTEM    ErrorCode = -2
+	ERROR_CANUSB_COMMAND_SUBSYSTEM ErrorCode = -3
+	ERROR_CANUSB_NOT_OPEN          ErrorCode = -4
+	ERROR_CANUSB_TX_FIFO_FULL      ErrorCode = -5
+	ERROR_CANUSB_INVALID_PARAM     ErrorCode = -6
+	ERROR_CANUSB_NO_MESSAGE        ErrorCode = -7
+	ERROR_CANUSB_MEMORY_ERROR      ErrorCode = -8
+	ERROR_CANUSB_NO_DEVICE         ErrorCode = -9
+	ERROR_CANUSB_TIMEOUT           ErrorCode = -10
+	ERROR_CANUSB_INVALID_HARDWARE  ErrorCode = -11
 )
 
 var (
 	ErrOK               = &Error{ERROR_CANUSB_OK, "OK"}
-	ErrGeneral          = &Error{ERROR_CANUSB_GENERAL, "general error (-1)"}
-	ErrOpenSubsystem    = &Error{ERROR_CANUSB_OPEN_SUBSYSTEM, "open subsystem error (-2)"}
-	ErrCommandSubsystem = &Error{ERROR_CANUSB_COMMAND_SUBSYSTEM, "command subsystem error (-3)"}
-	ErrNotOpen          = &Error{ERROR_CANUSB_NOT_OPEN, "not open error (-4)"}
-	ErrTxFifoFull       = &Error{ERROR_CANUSB_TX_FIFO_FULL, "transmit FIFO full (-5)"}
-	ErrInvalidParam     = &Error{ERROR_CANUSB_INVALID_PARAM, "invalid parameter (-6)"}
-	ErrNoMessage        = &Error{ERROR_CANUSB_NO_MESSAGE, "no message (-7)"}
-	ErrMemoryError      = &Error{ERROR_CANUSB_MEMORY_ERROR, "memory error (-8)"}
-	ErrNoDevice         = &Error{ERROR_CANUSB_NO_DEVICE, "no device (-9)"}
-	ErrTimeout          = &Error{ERROR_CANUSB_TIMEOUT, "timeout (-10)"}
-	ErrInvalidHardware  = &Error{ERROR_CANUSB_INVALID_HARDWARE, "invalid hardware (-11)"}
+	ErrGeneral          = &Error{ERROR_CANUSB_GENERAL, "general error"}
+	ErrOpenSubsystem    = &Error{ERROR_CANUSB_OPEN_SUBSYSTEM, "open subsystem error"}
+	ErrCommandSubsystem = &Error{ERROR_CANUSB_COMMAND_SUBSYSTEM, "command subsystem error"}
+	ErrNotOpen          = &Error{ERROR_CANUSB_NOT_OPEN, "not open error"}
+	ErrTxFifoFull       = &Error{ERROR_CANUSB_TX_FIFO_FULL, "transmit FIFO full"}
+	ErrInvalidParam     = &Error{ERROR_CANUSB_INVALID_PARAM, "invalid parameter"}
+	ErrNoMessage        = &Error{ERROR_CANUSB_NO_MESSAGE, "no message"}
+	ErrMemoryError      = &Error{ERROR_CANUSB_MEMORY_ERROR, "memory error"}
+	ErrNoDevice         = &Error{ERROR_CANUSB_NO_DEVICE, "no device"}
+	ErrTimeout          = &Error{ERROR_CANUSB_TIMEOUT, "timeout"}
+	ErrInvalidHardware  = &Error{ERROR_CANUSB_INVALID_HARDWARE, "invalid hardware"}
 )
