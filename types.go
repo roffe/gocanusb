@@ -15,6 +15,10 @@ type CANMsg struct {
 	Data      [8]byte     // Databytes 0..7
 }
 
+func (msg *CANMsg) String() string {
+	return fmt.Sprintf("ID: 0x%X, Timestamp: %d, Flags: %2X, Len: %d, Data: % 2X", msg.ID, msg.Timestamp, msg.Flags, msg.Len, msg.Data)
+}
+
 type CANMsgEx struct {
 	ID        uint32      // Message id
 	Timestamp uint32      // timestamp in milliseconds
@@ -22,8 +26,8 @@ type CANMsgEx struct {
 	Len       uint8       // Frame size (0.8)
 }
 
-func (msg *CANMsg) String() string {
-	return fmt.Sprintf("ID: 0x%X, Timestamp: %d, Flags: %X, Len: %d, Data: %02X", msg.ID, msg.Timestamp, msg.Flags, msg.Len, msg.Data)
+func (msg *CANMsgEx) String() string {
+	return fmt.Sprintf("ID: 0x%X, Timestamp: %d, Flags: %2X, Len: %d", msg.ID, msg.Timestamp, msg.Flags, msg.Len)
 }
 
 type MessageFlag uint8
