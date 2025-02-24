@@ -15,7 +15,7 @@ func init() {
 }
 
 func main() {
-	quitChan := make(chan os.Signal, 1)
+	quitChan := make(chan os.Signal, 2)
 	signal.Notify(quitChan, os.Interrupt, syscall.SIGTERM)
 
 	log.Println("Press CTRL-C to exit")
@@ -41,10 +41,6 @@ func main() {
 	sig := <-quitChan
 	log.Println("Signal received:", sig)
 
-	log.Println("Flushing")
-	if err := ch.Flush(gocanusb.FLUSH_WAIT); err != nil {
-		log.Println(err)
-	}
 	log.Println("Closing")
 	if err := ch.Close(); err != nil {
 		log.Fatal(err)
@@ -52,6 +48,6 @@ func main() {
 }
 
 func callbackHandler(msg *gocanusb.CANMsg) uintptr {
-	log.Println("Callback: ", msg.String())
+	log.Println("Callback:", msg.String())
 	return 0
 }

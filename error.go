@@ -69,17 +69,21 @@ const (
 )
 
 var (
-	ErrOK                = &Error{ERROR_CANUSB_OK, "OK"}
-	ErrGeneral           = &Error{ERROR_CANUSB_GENERAL, "general error"}
-	ErrOpenSubsystem     = &Error{ERROR_CANUSB_OPEN_SUBSYSTEM, "open subsystem error"}
-	ErrCommandSubsystem  = &Error{ERROR_CANUSB_COMMAND_SUBSYSTEM, "command subsystem error"}
-	ErrNotOpen           = &Error{ERROR_CANUSB_NOT_OPEN, "not open error"}
-	ErrTxFifoFull        = &Error{ERROR_CANUSB_TX_FIFO_FULL, "transmit FIFO full"}
-	ErrInvalidParam      = &Error{ERROR_CANUSB_INVALID_PARAM, "invalid parameter"}
-	ErrNoMessage         = &Error{ERROR_CANUSB_NO_MESSAGE, "no message"}
-	ErrMemoryError       = &Error{ERROR_CANUSB_MEMORY_ERROR, "memory error"}
-	ErrNoDevice          = &Error{ERROR_CANUSB_NO_DEVICE, "no device"}
-	ErrTimeout           = &Error{ERROR_CANUSB_TIMEOUT, "timeout"}
-	ErrInvalidHardware   = &Error{ERROR_CANUSB_INVALID_HARDWARE, "invalid hardware"}
-	ErrNoDeviceAvailable = &Error{0, "no device available"}
+	ErrOK               = &Error{ERROR_CANUSB_OK, "OK"}
+	ErrGeneral          = &Error{ERROR_CANUSB_GENERAL, "general error"}
+	ErrOpenSubsystem    = &Error{ERROR_CANUSB_OPEN_SUBSYSTEM, "open subsystem error"}
+	ErrCommandSubsystem = &Error{ERROR_CANUSB_COMMAND_SUBSYSTEM, "command subsystem error"}
+	ErrNotOpen          = &Error{ERROR_CANUSB_NOT_OPEN, "not open error"}
+	ErrTxFifoFull       = &Error{ERROR_CANUSB_TX_FIFO_FULL, "transmit FIFO full"}
+	ErrInvalidParam     = &Error{ERROR_CANUSB_INVALID_PARAM, "invalid parameter"}
+	ErrNoMessage        = &Error{ERROR_CANUSB_NO_MESSAGE, "no message"}
+	ErrMemoryError      = &Error{ERROR_CANUSB_MEMORY_ERROR, "memory error"}
+	ErrNoDevice         = &Error{ERROR_CANUSB_NO_DEVICE, "no device"}
+	ErrTimeout          = &Error{ERROR_CANUSB_TIMEOUT, "timeout"}
+	ErrInvalidHardware  = &Error{ERROR_CANUSB_INVALID_HARDWARE, "invalid hardware"}
+
+	ErrNoDeviceAvailable  = &Error{-100, "no device available"}
+	ErrMessageDataToLarge = &Error{-101, "message data to large"}
+	ErrMessageDataSize    = &Error{-102, "message data size missmatch"}
+	ErrMessageDataToSmall = &Error{-103, "message data to small"}
 )

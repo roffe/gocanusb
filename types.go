@@ -2,9 +2,13 @@ package gocanusb
 
 import "fmt"
 
+// CANHANDLE is a handle to a CANUSB device
 type CANHANDLE struct {
 	h int32
 }
+
+// Callback function used with SetReceiveCallback
+type CallbackFunc func(msg *CANMsg) uintptr
 
 // CAN Frame
 type CANMsg struct {
@@ -15,8 +19,13 @@ type CANMsg struct {
 	Data      [8]byte     // Databytes 0..7
 }
 
+// Returns a string representation of the CANMsg
 func (msg *CANMsg) String() string {
-	return fmt.Sprintf("ID: 0x%X, Timestamp: %d, Flags: %2X, Len: %d, Data: % 2X", msg.ID, msg.Timestamp, msg.Flags, msg.Len, msg.Data)
+	return fmt.Sprintf("ID: 0x%X, Timestamp: %d, Flags: %2X, Len: %d, Data: % 2X", msg.ID, msg.Timestamp, msg.Flags, msg.Len, msg.Data[:msg.Len])
+}
+
+func (msg *CANMsg) Bytes() []byte {
+	return msg.Data[:min(msg.Len, 8)]
 }
 
 type CANMsgEx struct {
@@ -26,6 +35,7 @@ type CANMsgEx struct {
 	Len       uint8       // Frame size (0.8)
 }
 
+// Returns a string representation of the CANMsgEx
 func (msg *CANMsgEx) String() string {
 	return fmt.Sprintf("ID: 0x%X, Timestamp: %d, Flags: %2X, Len: %d", msg.ID, msg.Timestamp, msg.Flags, msg.Len)
 }
@@ -34,7 +44,8 @@ type MessageFlag uint8
 
 // Message flags
 const (
-	CANMSG_EXTENDED MessageFlag = 0x80 // Extended CAN id
+	CANMSG_STANDARD MessageFlag = 0x00 // Standard 11-bit CAN id
+	CANMSG_EXTENDED MessageFlag = 0x80 // Extended 29-bit CAN id
 	CANMSG_RTR      MessageFlag = 0x40 // Remote frame
 )
 
@@ -94,5 +105,3 @@ const (
 	FLAG_SLOW          OpenFlag = 0x0008 // Check ACK/NACK's
 	FLAG_NO_LOCAL_SEND OpenFlag = 0x0010 // Don't send transmited frames on other local channels for the same interface
 )
-
-type CallbackFunc func(msg *CANMsg) uintptr

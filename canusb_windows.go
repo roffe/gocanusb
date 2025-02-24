@@ -124,6 +124,9 @@ func (ch *CANHANDLE) ReadFirst(id uint32, flags MessageFlag) (msg *CANMsg, err e
 
 // Write message to channel
 func (ch *CANHANDLE) Write(msg *CANMsg) error {
+	if msg.Len > 8 {
+		return ErrMessageDataToLarge
+	}
 	return checkErr(procWrite.Call(uintptr(ch.h), uintptr(unsafe.Pointer(msg))))
 }
 
@@ -131,11 +134,15 @@ func (ch *CANHANDLE) Write(msg *CANMsg) error {
 //
 // This is a version without a data-array in the structure
 func (ch *CANHANDLE) WriteEx(msg *CANMsgEx, data []byte) error {
-	if len(data) > 8 {
-		return errors.New("data array to large")
-	}
-	if len(data) < int(msg.Len) {
-		return errors.New("data array size missmatch")
+	dataLen := len(data)
+	msgLen := int(msg.Len)
+	switch {
+	case dataLen > 8 || dataLen > msgLen:
+		return ErrMessageDataToLarge
+	case dataLen < msgLen:
+		return ErrMessageDataToSmall
+	case dataLen != msgLen:
+		return ErrMessageDataSize
 	}
 	return checkErr(procWriteEx.Call(uintptr(ch.h), uintptr(unsafe.Pointer(msg)), uintptr(unsafe.Pointer(&data[0]))))
 }
