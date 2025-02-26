@@ -1,8 +1,6 @@
 package gocanusb
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"syscall"
 	"unsafe"
@@ -155,32 +153,31 @@ func (ch *CANHANDLE) Status() error {
 		return nil
 	}
 	status := int32(r1)
-	var errs []error
 	if err := NewError(status); err != nil {
 		return err
 	}
 	if status&CANSTATUS_RECEIVE_FIFO_FULL != 0 {
-		errs = append(errs, errors.New("receive FIFO full"))
+		return ErrReceiveFifoFull
 	}
 	if status&CANSTATUS_TRANSMIT_FIFO_FULL != 0 {
-		errs = append(errs, errors.New("transmit FIFO full"))
+		return ErrTransmitFifoFull
 	}
 	if status&CANSTATUS_ERROR_WARNING != 0 {
-		errs = append(errs, errors.New("error warning (EI)"))
+		return ErrWarning
 	}
 	if status&CANSTATUS_DATA_OVERRUN != 0 {
-		errs = append(errs, errors.New("data overrun (DOI)"))
+		return ErrDataOverrun
 	}
 	if status&CANSTATUS_ERROR_PASSIVE != 0 {
-		errs = append(errs, errors.New("error passive (EPI)"))
+		return ErrErrorPassive
 	}
 	if status&CANSTATUS_ARBITRATION_LOST != 0 {
-		errs = append(errs, errors.New("arbitration lost (ALI)"))
+		return ErrArbitrationLost
 	}
 	if status&CANSTATUS_BUS_ERROR != 0 {
-		errs = append(errs, errors.New("bus error (BEI)"))
+		return ErrBussError
 	}
-	return fmt.Errorf("status (%2X) %v", status, errs)
+	return &Error{ErrorCode(status), "Unknown"}
 }
 
 // Get hardware/firmware and driver version for channel

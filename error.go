@@ -86,4 +86,12 @@ var (
 	ErrMessageDataToLarge = &Error{-101, "message data to large"}
 	ErrMessageDataSize    = &Error{-102, "message data size missmatch"}
 	ErrMessageDataToSmall = &Error{-103, "message data to small"}
+
+	ErrReceiveFifoFull  = &Error{CANSTATUS_RECEIVE_FIFO_FULL, "receive FIFO full"}
+	ErrTransmitFifoFull = &Error{CANSTATUS_TRANSMIT_FIFO_FULL, "transmit FIFO full"}
+	ErrWarning          = &Error{CANSTATUS_ERROR_WARNING, "error warning (EI)"}
+	ErrDataOverrun      = &Error{CANSTATUS_DATA_OVERRUN, "data overrun (DOI)"}
+	ErrErrorPassive     = &Error{CANSTATUS_ERROR_PASSIVE, "error passive (EPI)"}
+	ErrArbitrationLost  = &Error{CANSTATUS_ARBITRATION_LOST, "arbitration lost (ALI)"}
+	ErrBussError        = &Error{CANSTATUS_BUS_ERROR, "bus error (BEI)"}
 )
