@@ -24,6 +24,7 @@ func (msg *CANMsg) String() string {
 	return fmt.Sprintf("ID: 0x%X, Timestamp: %d, Flags: %2X, Len: %d, Data: % 2X", msg.ID, msg.Timestamp, msg.Flags, msg.Len, msg.Data[:msg.Len])
 }
 
+// Returns the data bytes of the CANMsg
 func (msg *CANMsg) Bytes() []byte {
 	return msg.Data[:min(msg.Len, 8)]
 }

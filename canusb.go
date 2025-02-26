@@ -3,6 +3,7 @@ package gocanusb
 import (
 	"errors"
 	"fmt"
+	"log"
 	"syscall"
 	"unsafe"
 )
@@ -208,24 +209,62 @@ func (ch *CANHANDLE) SetTimeouts(receiveTimeout, sendTimeout uint32) error {
 	return checkErr(procSetTimeout.Call(uintptr(ch.h), uintptr(receiveTimeout), uintptr(sendTimeout)))
 }
 
-// Set a receive call back function. Set the callback to nil to reset it.
+// Set a receive callback function. Set the callback to nil to reset it.
 func (ch *CANHANDLE) SetReceiveCallback(fn CallbackFunc) error {
 	if fn == nil {
 		return checkErr(procSetReceiveCallBack.Call(uintptr(ch.h), 0))
 	}
-	// Wrapper function to ensure we copy the message before calling the callback to prevent
-	//  the data in the underlying slice to be overwritten by the next message.
-	wrapperFn := func(cbmsg *CANMsg) uintptr {
+	return checkErr(procSetReceiveCallBack.Call(uintptr(ch.h), syscall.NewCallback(createWrapper(fn))))
+}
+
+// Set a receive callback function. Set the callback to nil to reset it.
+// the callback will be called in a separate go routine to prevent blocking the receive loop if your callback takes long to execute.
+// this will allow the receive loop to continue receiving messages while the callback is processing the message.
+func (ch *CANHANDLE) SetAsyncReceiveCallback(fn CallbackFunc) error {
+	if fn == nil {
+		return checkErr(procSetReceiveCallBack.Call(uintptr(ch.h), 0))
+	}
+	return checkErr(procSetReceiveCallBack.Call(uintptr(ch.h), syscall.NewCallback(createAsyncWrapper(fn))))
+}
+
+func createWrapper(fn CallbackFunc) func(cbmsg *CANMsg) uintptr {
+	return func(canMsg *CANMsg) uintptr {
 		msg := &CANMsg{
-			ID:        cbmsg.ID,
-			Timestamp: cbmsg.Timestamp,
-			Flags:     cbmsg.Flags,
-			Len:       cbmsg.Len,
+			ID:        canMsg.ID,
+			Timestamp: canMsg.Timestamp,
+			Flags:     canMsg.Flags,
+			Len:       canMsg.Len,
 		}
-		copy(msg.Data[:], cbmsg.Data[:])
+		copy(msg.Data[:], canMsg.Data[:])
 		return fn(msg)
 	}
-	return checkErr(procSetReceiveCallBack.Call(uintptr(ch.h), syscall.NewCallback(wrapperFn)))
+}
+
+func createAsyncWrapper(fn CallbackFunc) func(cbmsg *CANMsg) uintptr {
+	asyncMsg := make(chan *CANMsg, 128)
+	go func() {
+		for {
+			for msg := range asyncMsg {
+				fn(msg)
+			}
+		}
+	}()
+	return func(canMsg *CANMsg) uintptr {
+		msg := &CANMsg{
+			ID:        canMsg.ID,
+			Timestamp: canMsg.Timestamp,
+			Flags:     canMsg.Flags,
+			Len:       canMsg.Len,
+		}
+		copy(msg.Data[:], canMsg.Data[:])
+		select {
+		case asyncMsg <- msg:
+		default:
+			// Drop message if channel is full
+			log.Printf("async handler channel full, dropped message %3X", msg.ID)
+		}
+		return 1
+	}
 }
 
 // Get all found adapters that is connected to this machine.
