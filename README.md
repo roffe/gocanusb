@@ -1,6 +1,6 @@
 # goCANUSB
 
-Golang implementation for using the LAWICEL CANUSB Windows DLL
+Golang implementation for using the [https://www.canusb.com/products/canusb/](LAWICEL CANUSB) Windows DLL
 
 [examples](https://github.com/roffe/gocanusb/tree/master/examples)
 
