@@ -2,6 +2,12 @@ package gocanusb
 
 import "fmt"
 
+const (
+	// Filter mask settings
+	ACCEPTANCE_CODE_ALL uint32 = 0x00000000
+	ACCEPTANCE_MASK_ALL uint32 = 0xFFFFFFFF
+)
+
 // CANHANDLE is a handle to a CANUSB device
 type CANHANDLE struct {
 	h int32
@@ -10,13 +16,15 @@ type CANHANDLE struct {
 // Callback function used with SetReceiveCallback
 type CallbackFunc func(msg *CANMsg) uintptr
 
+const MAX_DLC = 8
+
 // CAN Frame
 type CANMsg struct {
-	ID        uint32      // Message id
-	Timestamp uint32      // timestamp in milliseconds
-	Flags     MessageFlag // Message flags
-	Len       uint8       // Frame size (0.8)
-	Data      [8]byte     // Databytes 0..7
+	ID        uint32        // Message id
+	Timestamp uint32        // timestamp in milliseconds
+	Flags     MessageFlag   // Message flags
+	Len       uint8         // Frame size (0.8)
+	Data      [MAX_DLC]byte // Databytes 0..7
 }
 
 // Returns a string representation of the CANMsg
@@ -59,10 +67,6 @@ const (
 	CANSTATUS_ERROR_PASSIVE      = 0x20
 	CANSTATUS_ARBITRATION_LOST   = 0x40
 	CANSTATUS_BUS_ERROR          = 0x80
-
-	// Filter mask settings
-	ACCEPTANCE_CODE_ALL uint32 = 0x00000000
-	ACCEPTANCE_MASK_ALL uint32 = 0xFFFFFFFF
 )
 
 type CANUSBStatistics struct {

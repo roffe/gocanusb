@@ -1,7 +1,5 @@
 package gocanusb
 
-import "syscall"
-
 var (
-	canusbdrv = syscall.NewLazyDLL("canusbdrv64.dll")
+	dllName = "canusbdrv64.dll"
 )

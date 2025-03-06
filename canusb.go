@@ -1,28 +1,65 @@
 package gocanusb
 
 import (
+	"fmt"
 	"log"
 	"syscall"
 	"unsafe"
 )
 
+var InitErr error
+
 var (
-	procOpen               = canusbdrv.NewProc("canusb_Open")
-	procClose              = canusbdrv.NewProc("canusb_Close")
-	procRead               = canusbdrv.NewProc("canusb_Read")
-	procReadEx             = canusbdrv.NewProc("canusb_ReadEx")
-	procReadFirst          = canusbdrv.NewProc("canusb_ReadFirst")
-	procWrite              = canusbdrv.NewProc("canusb_Write")
-	procWriteEx            = canusbdrv.NewProc("canusb_WriteEx")
-	procStatus             = canusbdrv.NewProc("canusb_Status")
-	procVersionInfo        = canusbdrv.NewProc("canusb_VersionInfo")
-	procFlush              = canusbdrv.NewProc("canusb_Flush")
-	procGetStatistics      = canusbdrv.NewProc("canusb_GetStatistics")
-	procSetTimeout         = canusbdrv.NewProc("canusb_SetTimeouts")
-	procSetReceiveCallBack = canusbdrv.NewProc("canusb_setReceiveCallBack")
-	procGetFirstAdapter    = canusbdrv.NewProc("canusb_getFirstAdapter")
-	procGetNextAdapter     = canusbdrv.NewProc("canusb_getNextAdapter")
+	dllFuncs = map[string]**syscall.Proc{
+		"canusb_Open":               &procOpen,
+		"canusb_Close":              &procClose,
+		"canusb_Read":               &procRead,
+		"canusb_ReadEx":             &procReadEx,
+		"canusb_ReadFirst":          &procReadFirst,
+		"canusb_Write":              &procWrite,
+		"canusb_WriteEx":            &procWriteEx,
+		"canusb_Status":             &procStatus,
+		"canusb_VersionInfo":        &procVersionInfo,
+		"canusb_Flush":              &procFlush,
+		"canusb_GetStatistics":      &procGetStatistics,
+		"canusb_SetTimeouts":        &procSetTimeout,
+		"canusb_setReceiveCallBack": &procSetReceiveCallBack,
+		"canusb_getFirstAdapter":    &procGetFirstAdapter,
+		"canusb_getNextAdapter":     &procGetNextAdapter,
+	}
+	procOpen               *syscall.Proc
+	procClose              *syscall.Proc
+	procRead               *syscall.Proc
+	procReadEx             *syscall.Proc
+	procReadFirst          *syscall.Proc
+	procWrite              *syscall.Proc
+	procWriteEx            *syscall.Proc
+	procStatus             *syscall.Proc
+	procVersionInfo        *syscall.Proc
+	procFlush              *syscall.Proc
+	procGetStatistics      *syscall.Proc
+	procSetTimeout         *syscall.Proc
+	procSetReceiveCallBack *syscall.Proc
+	procGetFirstAdapter    *syscall.Proc
+	procGetNextAdapter     *syscall.Proc
 )
+
+func init() {
+	canusb, err := syscall.LoadDLL(dllName)
+	if err != nil {
+		InitErr = err
+		return
+	}
+
+	for funcName, procPtr := range dllFuncs {
+		*procPtr, err = canusb.FindProc(funcName)
+		if err != nil {
+			InitErr = fmt.Errorf("failed to find procedure %s: %w", funcName, err)
+			return
+		}
+	}
+
+}
 
 // Open CAN interface to device
 //
@@ -207,6 +244,8 @@ func (ch *CANHANDLE) SetTimeouts(receiveTimeout, sendTimeout uint32) error {
 }
 
 // Set a receive callback function. Set the callback to nil to reset it.
+//
+// The callback will be called in a separate goroutine using a buffered channel to prevent blocking the device.
 func (ch *CANHANDLE) SetReceiveCallback(fn CallbackFunc) error {
 	if fn == nil {
 		return checkErr(procSetReceiveCallBack.Call(uintptr(ch.h), 0))
